@@ -13,6 +13,8 @@ if(require(mapproj) == F) install.packages("mapproj"); require(mapproj)
 if(require(ggplot2) == F) install.packages("ggplot2"); require(ggplot2)
 if(require(tidyverse) == F) install.packages("tidyverse"); require(tidyverse)
 if(require(modelsummary) == F) install.packages("modelsummary"); require(modelsummary)
+if(require(ggstance) == F) install.packages("ggstance"); require(ggstance)
+if(require(jtools) == F) install.packages("jtools"); require(jtools)
 options(scipen = 999)
 ------------------------------------------------------------------------------------------------------
  # Carregando banco de dados 
@@ -20,7 +22,7 @@ options(scipen = 999)
   dados <- read_excel("pedro-fonseca-ad-ufpe-2019.xlsx", 
                       col_types = c("numeric", "numeric", "text", 
                                     "numeric", "numeric", "numeric", 
-                                    "numeric", "text", "numeric"))
+                                    "numeric", "text", "numeric", "numeric"))
 
  # Transformando em variavel dummy, em que prefeitos do PSB são 1 e os demais são 0
 
@@ -70,7 +72,7 @@ sd(dados$PIB2016)
 sd(dados$IDHM)
 sd(dados$regiao)
 sd(dados$IFGF)
-
+sd(dados$PIBcapita)
 
 plot_histogram(dados)
 
@@ -87,7 +89,7 @@ ggplot(dados, aes(x = regiao, y = IDHM)) +
 
 
  # Plotando um gráfico para cada região de PE
-ggplot(data = dados, mapping = aes(x = IDHM, y = PIB2016)) +
+ggplot(data = dados, mapping = aes(x = IDHM, y = PIBcapita)) +
   geom_line() +
   facet_wrap(~ regiao) +
   labs(title = "PIB x IDHM regiao de PE",
@@ -97,14 +99,25 @@ ggplot(data = dados, mapping = aes(x = IDHM, y = PIB2016)) +
   theme(panel.grid = element_blank())
 
  # Grafico de dispersao por regiao
-ggplot(data = dados, mapping = aes(x = IDHM, y = PIB2016, color = regiao)) +
-  geom_point()
 
-ggplot(data = dados, mapping = aes(x = IDHM, y = PIB2016)) +
+ggplot(data = dados, mapping = aes(x = Nota, y = PIB2016, color = regiao)) +
+  geom_point() +
+  theme_bw()
+  
+
+ggplot(data = dados, mapping = aes(x = IFGF, y = PIB2016)) +
   geom_point(aes(color = Nota)) +
   theme_bw() 
   
- # Boxplot: prefeitos
+ggplot(data = dados, mapping = aes(x = Nota, y = IFGF)) +
+  geom_point() +
+  theme_bw()
+
+ggplot(data = dados, mapping = aes(x = Nota, y = PIBcapita)) +
+  geom_point() +
+  theme_bw()
+
+ # Boxplot prefeitos
 ggplot(dados, aes(factor(prefeitos2016), Nota)) +
   labs(x = "Prefeitos", y = "Nota", title = "Gráfico de dispersão") +
   geom_boxplot() +
@@ -117,61 +130,105 @@ reg1 <- lm(Nota ~ IDHM, data = dados)
 summary(reg1)
 
 plot(reg1)
+
 confint(reg1)
 
 ggplot(dados, aes(Nota, IDHM)) +
   labs(x = "Nota", y = "IDHM", title = "Gráfico de dispersão") +
   geom_point() +
-  geom_smooth(method = "lm", se = FALSE)
+  geom_smooth(method = "lm") +
+  theme_bw() 
 
  # Regressao 2
 reg2 <- lm(Nota ~ PIB2016, data = dados)
 
 summary(reg2)
+
 plot(reg2)
+
 confint(reg2)
 
 ggplot(dados, aes(Nota, PIB2016)) +
   labs(x = "Nota", y = "PIB 2016", title = "Gráfico de dispersão") +
   geom_point() +
-  geom_smooth(method = "lm", se = FALSE)
+  geom_smooth(method = "lm") +
+  theme_bw() 
 
  # Regressao 3
 reg3 <- lm(Nota ~ IFGF, data = dados)
 
 summary(reg3)
+
 plot(reg3)
+
 confint(reg3)
 
+ggplot(dados, aes(Nota, IFGF)) +
+  labs(x = "Nota", y = "IFGF", title = "Gráfico de dispersão") +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  theme_bw() 
 
  # Regressao 4
 reg4 <- lm(Nota ~ regiao, data = dados)
+
 summary(reg4)
+
+plot(reg4)
+
+confint(reg4)
 
 ggplot(dados, aes(Nota, regiao)) +
   labs(x = "Nota", y = "regiao", title = "Gráfico de dispersão") +
   geom_point() +
-  geom_smooth(method = "lm", se = FALSE)
+  geom_smooth(method = "lm") +
+  theme_bw() 
 
-  # Regressao 5
-reg5 <- lm(Nota ~ PIB2016 + IDHM + factor(prefeitos2016) + regiao, data = dados)
+  # Regressão 5
+reg5 <- lm(Nota ~ PIBcapita, data = dados)
+
+summary(reg5)
+
+plot(reg5)
+
+confint (reg5)
+
+ggplot(dados, aes(Nota, PIBcapita)) +
+  labs(x = "Nota", y = "PIB per capita", title = "Gráfico de dispersão") +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  theme_bw() 
+
+  # Regressao 6
+reg6 <- lm(Nota ~ PIB2016 + IDHM + factor(prefeitos2016) + regiao + IFGF + PIBcapita, data = dados)
+
+summary(reg6)
+
+plot(reg6)
+
+confint (reg6)
 
   # Tabela 
-install.packages("modelsummary")
-require(modelsummary)
 
 models <- list()
 models[['reg1']] <- lm(Nota ~ IDHM, data = dados)
 models[['reg2']] <- lm(Nota ~ PIB2016, data = dados)
 models[['reg3']] <- lm(Nota ~ IFGF, data = dados)
 models[['reg4']] <- lm(Nota ~ regiao, data = dados)
-models[['reg5']] <- lm(Nota ~ PIB2016 + IDHM + factor(prefeitos2016) + regiao + IFGF, data = dados)
+models[['reg5']] <- lm(Nota ~ PIBcapita, data = dados)
+models[['reg6']] <- lm(Nota ~ PIB2016 + IDHM + factor(prefeitos2016) + regiao + IFGF + PIBcapita, data = dados)
 
 msummary(models, 
          title = 'Tabela 3 - Resultados.',
          notes = '*** p < 0.001; ** p < 0.01; * p < 0.05.',
          stars = TRUE,
          stars_note = FALSE) 
+
+  # Gráfico dos modelos
+
+plot_summs(reg1, reg2, reg3, reg4, reg5, reg6, scale = TRUE, inner_ci_level = .9,
+           model.names = c("Modelo 1", "Modelo 2", "Modelo 3", "Modelo 4", "Modelo 5", "Modelo 6"))
+
 
 #### MAPA ####
 
